@@ -15,7 +15,7 @@ import java.util.Optional;
 
 @Repository
 public class AuthorJdbcRepository {
-//DataSource 는 jdbc의 DB 관리 객체
+    //DataSource 는 jdbc의 DB 관리 객체
     private final DataSource dataSource;
 
     @Autowired
@@ -23,7 +23,7 @@ public class AuthorJdbcRepository {
         this.dataSource = dataSource;
     }
 
-//    jdbc의 단점
+    //    jdbc의 단점
 //    1.쿼리 직접 작성 : 1)raw쿼리에서 오타가 나도 컴파일에러 X 2)데이터 추가시, 컬럼의 매핑을 수작업
 //    2.데이터 조회후 객체조립을 수작업
     public void save(Author author) {
@@ -78,7 +78,7 @@ public class AuthorJdbcRepository {
             String sql = "select * from author";
             PreparedStatement ps = connection.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
-          while (rs.next()){
+            while (rs.next()){
                 Long id = rs.getLong("id");
                 String name = rs.getString("name");
                 String email = rs.getString("email");
@@ -134,6 +134,4 @@ public class AuthorJdbcRepository {
         }
         return Optional.ofNullable(author);
     }
-    }
-
-
+}

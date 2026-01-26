@@ -10,6 +10,7 @@ import com.beyond.basic.b2_board.post.dtos.PostListDto;
 import com.beyond.basic.b2_board.post.repository.PostRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,24 +33,24 @@ public class PostService {
     }
 
     public void save(PostCreateDto dto) {
-       Author author = authorRepository.findByEmail(dto.getAuthorEmail())
+//       Author author = authorRepository.findByEmail(dto.getAuthorEmail())
+//                .orElseThrow(() -> new EntityNotFoundException("없는 이메일 입니다."));
+        String email = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
+        System.out.println(email);
+        Author author = authorRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("없는 이메일 입니다."));
 
-        Post post = dto.toEntity(author);
-        this.postRepository.save(post);
+        postRepository.save(dto.toEntity(author));
     }
 
     @Transactional(readOnly = true)
     public List<PostListDto> findAll() {
         List<Post>postList = postRepository.findByDelYn("N");
-        List<PostListDto>dtoList = new ArrayList<>();
+        List<PostListDto> dtoList = new ArrayList<>();
         for (Post p : postList){
-            Author author = authorRepository.findById(p.getAuthorId())
-                    .orElseThrow(()->new EntityNotFoundException("X"));
-            PostListDto dto  = PostListDto.fromEntity(p,author);
+            PostListDto dto  = PostListDto.fromEntity(p, p.getAuthor());
             dtoList.add(dto);
         }
-
         return dtoList;
 
     }
@@ -61,8 +62,8 @@ public class PostService {
         if ("Y".equals(post.getDelYn())) {
             throw new NoSuchElementException("삭제된 게시글입니다.");
         }
-        Author author = authorRepository.findById(post.getAuthorId()).orElseThrow(()->new EntityNotFoundException("X"));
-        PostDetailDto dto = PostDetailDto.fromEntity(post,author);
+//        Author author = authorRepository.findById(post.getAuthorId()).orElseThrow(()->new EntityNotFoundException("X"));
+        PostDetailDto dto = PostDetailDto.fromEntity(post);
         return dto;
     }
 

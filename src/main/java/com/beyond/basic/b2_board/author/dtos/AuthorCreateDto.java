@@ -13,7 +13,7 @@ import org.springframework.validation.annotation.Validated;
 //dto 계층은 엔티티만큼의 안정성을 우선하기보다는,편의를 위해 setter도 일반적으로 추가.
 @Data
 public class AuthorCreateDto {
-//    NotEmpty : 비어있으면 안됨을 의미하는 어노테이션
+    //    NotEmpty : 비어있으면 안됨을 의미하는 어노테이션
 //    NotBlank : "   " (공백)까지 포함해서 검증하는 어노테이션
     @NotBlank(message = "이름이 비어있으면 안됩니다.")
     private String name;
@@ -23,11 +23,11 @@ public class AuthorCreateDto {
     @Size(min = 8, message = "password의 길이가 너무 짧습니다.")
     private String password;
 
-    public Author toEntity() {
+    public Author toEntity(String encodedPassword) {
         return Author.builder()
                 .name(this.name)
                 .email(this.email)
-                .password(this.password)
+                .password(encodedPassword)
                 .build();
     }
 

@@ -22,7 +22,7 @@ public class PostListDto {
                 .id(post.getId())
                 .title(post.getTitle())
                 .category(post.getCategory())
-                .authorEmail(author.getEmail())
+                .authorEmail(post.getAuthor().getEmail())
                 .build();
     }
 }

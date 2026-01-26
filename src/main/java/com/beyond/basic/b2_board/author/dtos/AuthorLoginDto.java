@@ -10,16 +10,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AuthorListDto {
-    private Long id;
-    private String name;
+public class AuthorLoginDto {
     private String email;
+    private String password;
 
-    public static AuthorListDto fromEntity(Author author){
-        return AuthorListDto.builder()
-                .id(author.getId())
-                .name(author.getName())
+    public AuthorLoginDto fromEntity(Author author){
+        return AuthorLoginDto.builder()
                 .email(author.getEmail())
+                .password(author.getPassword())
                 .build();
     }
 }
