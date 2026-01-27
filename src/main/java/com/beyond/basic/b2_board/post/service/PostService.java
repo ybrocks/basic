@@ -45,14 +45,14 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public List<PostListDto> findAll() {
-        List<Post>postList = postRepository.findByDelYn("N");
+//        List<Post>postList = postRepository.findByDelYn("N");
+        List<Post> postList = postRepository.findAllFetchInnerJoin();
         List<PostListDto> dtoList = new ArrayList<>();
         for (Post p : postList){
             PostListDto dto  = PostListDto.fromEntity(p, p.getAuthor());
             dtoList.add(dto);
         }
         return dtoList;
-
     }
 
     @Transactional(readOnly = true)

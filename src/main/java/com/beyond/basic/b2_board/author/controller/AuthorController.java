@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -85,7 +86,9 @@ public class AuthorController {
         return "ok";
     }
 
+//    회원상세정보(admin)
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> findById(@PathVariable Long id) {
         try {
             AuthorDetailDto dto = authorService.findById(id);
@@ -98,6 +101,15 @@ public class AuthorController {
                     .build();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(dto);
         }
+    }
+
+//    내정보 조회
+    @GetMapping("/myinfo")
+//    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> myinfo(@AuthenticationPrincipal String principal){
+        System.out.println(principal);
+        AuthorDetailDto dto = authorService.myinfo();
+        return ResponseEntity.status(HttpStatus.OK).body(dto);
     }
 
     //    비밀번호 수정
