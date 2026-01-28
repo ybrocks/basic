@@ -9,6 +9,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.cglib.core.Local;
+
+import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
@@ -19,6 +22,10 @@ public class PostCreateDto {
     private String contents;
     private String category;
 //    private String authorEmail;
+    @Builder.Default
+    private String appointment = "N";
+    @Builder.Default
+    private LocalDateTime appointmentTime = LocalDateTime.now();
 
     public Post toEntity(Author author){
         return Post.builder()
@@ -26,6 +33,9 @@ public class PostCreateDto {
                 .contents(this.contents)
                 .category(this.category)
                 .author(author)
+//                .delYn("N")
+                .appointment(this.appointment)
+                .appointmentTime(this.appointmentTime)
                 .build();
     }
 }
