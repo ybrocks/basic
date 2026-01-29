@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -36,7 +37,8 @@ public class AuthorController {
     //회원가입
     @PostMapping("/create")
 //    dto에 있는 validation 어노테이션과 @Valid가 한쌍
-    public ResponseEntity<?> create(@RequestBody @Valid AuthorCreateDto dto) {
+    public ResponseEntity<?> create(@RequestPart("author") @Valid AuthorCreateDto dto,
+                                    @RequestPart("profileImage") MultipartFile profileImage) {
 //        아래 예외처리는 ExceptionHandler에서 전역적으로 예외처리
 //        try {
 //            authorService.save(dto);
@@ -49,7 +51,7 @@ public class AuthorController {
 //                    .build();
 //            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(commonErrorDto);
 //        }
-        authorService.save(dto);
+        authorService.save(dto, profileImage);
         return ResponseEntity.status(HttpStatus.CREATED).body("OK");
     }
 

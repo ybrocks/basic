@@ -7,11 +7,17 @@ import com.beyond.basic.b2_board.post.domain.Post;
 import com.beyond.basic.b2_board.post.repository.PostRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -36,20 +42,24 @@ public class AuthorService {
     private final AuthorRepository authorMemoryRepository;
     private final PostRepository postRepository;
     private final PasswordEncoder passwordEncoder;
+    private final S3Client s3Client;
+    @Value("${aws.s3.bucket1}")
+    private String bucket;
 
     //    생성자가 하나밖에 없을떄에는 Autowired생략가능
     @Autowired
-    public AuthorService(AuthorRepository authorMemoryRepository, PostRepository postRepository, PasswordEncoder passwordEncoder) {
+    public AuthorService(AuthorRepository authorMemoryRepository, PostRepository postRepository, PasswordEncoder passwordEncoder, S3Client s3Client) {
         this.authorMemoryRepository = authorMemoryRepository;
         this.postRepository = postRepository;
         this.passwordEncoder = passwordEncoder;
+        this.s3Client = s3Client;
     }
 //    의존성주입방법3.@RequiredArgsConstructor 어노테이션 사용
 //    반드시 초기화되어야 하는 필드를 선언하고,@RequiredArgsConstructor어노테이션 선언시 생성자주입방식으로 의존성이 주입
 //    단점 : 다형성 설계는 불가
 //    private final AuthorRepository authorRepository;
 
-    public void save(AuthorCreateDto dto) {
+    public void save(AuthorCreateDto dto, MultipartFile profileImage) {
 //       방법1. 객체 직접 조립
 //       1-1) 생성자만을 활용한 객체 조립
 //       Author author = new Author(null, dto.getName(), dto.getEmail(), dto.getPassword());
@@ -63,20 +73,47 @@ public class AuthorService {
 //       방법2. toEntity, fromEntity 패턴을 통한 객체 조립
 //       객체조립이라는 반복적이 작업을 별도의 코드로 떄어내 공통화
 
-//        email중복 여부 검증
-        if (authorMemoryRepository.findByEmail(dto.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("email 중복입니다");
-        }
-        Author author = dto.toEntity(passwordEncoder.encode(dto.getPassword()));
+
         //       cascade persist를 활용한 예시
-        author.getPostList().add(Post.builder().title("ㅎㅇ").author(author).build());
-        authorMemoryRepository.save(author);
+//        author.getPostList().add(Post.builder().title("ㅎㅇ").author(author).build());
+//        authorMemoryRepository.save(author);
+
 //        cascade옵션이 아닌 예시
-//        Author AuthroDB=authorMemoryRepository.save(author);
 //        postRepository.save(Post.builder().title("ㅎㅇ").author(authorDB).build());
 
 //        예외 발생시 transactional 어노테이션에 의해 rollback 처리
 //        authorMemoryRepository.findById(10L).orElseThrow(()->new NoSuchElementException("no"));
+
+        //        email중복 여부 검증
+
+//        파일 업로드를 위한 저장 객체 구성
+        if (authorMemoryRepository.findByEmail(dto.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("email 중복입니다");
+        }
+        Author author = dto.toEntity(passwordEncoder.encode(dto.getPassword()));
+        Author AuthorDB=authorMemoryRepository.save(author);
+
+
+//        저장 객체 구성
+        if (profileImage != null){
+            String fileName = "user-"+author.getId()+"-profileimage-"+profileImage.getOriginalFilename();
+            PutObjectRequest request = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(fileName)
+                    .contentType(profileImage.getContentType()) //image/jpeg, video/mp4 등 확장자 정보
+                    .build();
+
+//        aws에 이미지 업로드(byte형태로 변환해서 업로드)
+            try {
+                s3Client.putObject(request, RequestBody.fromBytes(profileImage.getBytes()));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+//        aws의 이미지 url 추출
+            String imgUrl = s3Client.utilities().getUrl(a->a.bucket(bucket).key(fileName)).toExternalForm();
+            author.updateProfileImageUrl(imgUrl);
+        }
+
     }
 
     //    트랜잭션 처리가 필요없는 조회만 있는 메서드의 경우 성능향상을 위해 readonly처리
